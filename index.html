@@ -567,13 +567,13 @@
 
             .container {
                 flex-direction: column;
-                height: auto;
+                height: 100vh;
                 padding: 10px;
             }
             
             .sidebar {
                 width: 100%;
-                max-height: 50vh;
+                max-height: 40vh;
                 position: fixed;
                 top: 85px;
                 left: -100%;
@@ -589,6 +589,9 @@
             .map-container {
                 height: calc(100vh - 120px);
                 margin-top: 10px;
+                flex: 1;
+                height: auto;
+                min-height: 50vh;
             }
 
             .info-panel {
@@ -1814,19 +1817,7 @@
                             <div style="margin-bottom: 8px; padding: 8px; background: rgba(255, 255, 255, 0.7); border-radius: 6px; border-left: 3px solid var(--accent-color);">
                                 <i class="fas fa-map-marker-alt" style="color: var(--accent-color);"></i>
                                 <strong>Klik Peta:</strong> Klik pada peta untuk informasi koordinat dan nilai pixel
-                            </div>
-                            
-                            <div style="margin-bottom: 12px; padding: 8px; background: rgba(255, 255, 255, 0.7); border-radius: 6px; border-left: 3px solid #9C27B0;">
-                                <i class="fas fa-search" style="color: #9C27B0;"></i>
-                                <strong>Cari Layer:</strong> Gunakan kotak pencarian untuk menemukan layer dengan cepat
-                            </div>
-                        </div>
-
-                        <div style="margin-top: 15px; padding: 10px; background: rgba(255, 193, 7, 0.1); border-radius: 8px; border: 1px dashed #FFC107;">
-                            <small style="color: #856404;">
-                                <i class="fas fa-info-circle"></i>
-                                <strong>Catatan:</strong> Pastikan file TIFF berada dalam folder 'tiff' dan dapat diakses untuk memuat layer dengan benar.
-                            </small>
+                            </div>                            
                         </div>
 
                         <div style="margin-top: 15px;">
