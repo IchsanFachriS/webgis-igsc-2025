@@ -1,0 +1,1947 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGIS - Analisis Potensi Geothermal Halmahera Barat</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --secondary-color: #2196F3;
+            --accent-color: #FF5722;
+            --dark-color: #2c3e50;
+            --light-color: #ecf0f1;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            --border-radius: 12px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 15px 20px;
+            box-shadow: var(--shadow);
+            border-bottom: 3px solid var(--primary-color);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            animation: slideDown 0.6s ease-out;
+        }
+
+        .header h1 {
+            color: var(--dark-color);
+            font-size: clamp(18px, 4vw, 28px);
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 5px;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            text-align: center;
+            font-size: clamp(12px, 2.5vw, 16px);
+        }
+
+        .container {
+            display: flex;
+            height: calc(100vh - 85px);
+            gap: 15px;
+            padding: 15px;
+            position: relative;
+        }
+
+        /* Mobile Toggle Button */
+        .mobile-toggle {
+            display: none;
+            position: fixed;
+            top: 100px;
+            left: 20px;
+            z-index: 2000;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            animation: pulse 2s infinite;
+        }
+
+        .mobile-toggle:hover {
+            transform: scale(1.1);
+            background: #45a049;
+        }
+
+        .sidebar {
+            width: 380px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: var(--transition);
+            animation: slideInLeft 0.6s ease-out;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-color) rgba(0,0,0,0.1);
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 10px;
+        }
+
+        .sidebar h3 {
+            color: var(--dark-color);
+            margin-bottom: 20px;
+            font-size: 22px;
+            border-bottom: 3px solid var(--primary-color);
+            padding-bottom: 10px;
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .layer-group {
+            margin-bottom: 25px;
+            border: 1px solid rgba(76, 175, 80, 0.2);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            background: rgba(76, 175, 80, 0.05);
+            transition: var(--transition);
+        }
+
+        .layer-group:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .layer-group h4 {
+            color: var(--dark-color);
+            font-size: 16px;
+            margin-bottom: 15px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .layer-group h4:before {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary-color);
+            transition: var(--transition);
+        }
+
+        .layer-group:hover h4:before {
+            width: 100%;
+        }
+
+        .layer-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 12px;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+            border: 1px solid transparent;
+        }
+
+        .layer-item:hover {
+            background: rgba(76, 175, 80, 0.15);
+            transform: translateX(8px);
+            border-color: rgba(76, 175, 80, 0.3);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+        }
+
+        .layer-item.active {
+            background: rgba(76, 175, 80, 0.2);
+            border-color: var(--primary-color);
+        }
+
+        .layer-item input[type="checkbox"] {
+            margin-right: 12px;
+            transform: scale(1.3);
+            accent-color: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .layer-item label {
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--dark-color);
+            flex: 1;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .layer-info {
+            margin-left: auto;
+            color: var(--secondary-color);
+            font-size: 16px;
+            opacity: 0.7;
+            transition: var(--transition);
+            cursor: help;
+        }
+
+        .layer-info:hover {
+            opacity: 1;
+            transform: scale(1.2);
+        }
+
+        .opacity-control {
+            margin-top: 8px;
+            margin-left: 30px;
+            display: none;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .opacity-control.show {
+            display: block;
+        }
+
+        .opacity-control input[type="range"] {
+            width: 100%;
+            accent-color: var(--primary-color);
+            height: 6px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .opacity-control input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .opacity-control label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .map-container {
+            flex: 1;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            animation: slideInRight 0.6s ease-out;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+
+        /* Map Controls Enhancement */
+        .leaflet-control-layers,
+        .leaflet-control-scale,
+        .leaflet-control-zoom {
+            border-radius: var(--border-radius) !important;
+            box-shadow: var(--shadow) !important;
+            border: none !important;
+        }
+
+        .leaflet-control-zoom a {
+            border-radius: 8px !important;
+            margin: 2px !important;
+        }
+
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.98);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            z-index: 10000;
+            display: none;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        .loading-text {
+            color: var(--dark-color);
+            font-weight: 600;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .info-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            z-index: 1000;
+            max-width: 350px;
+            min-width: 280px;
+            display: none;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: slideInRight 0.4s ease-out;
+        }
+
+        .info-panel h4 {
+            color: var(--dark-color);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-panel .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #999;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .info-panel .close-btn:hover {
+            color: var(--accent-color);
+            transform: scale(1.2);
+        }
+
+        .error-message, .success-message {
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 15px;
+            display: none;
+            font-weight: 500;
+            position: relative;
+            animation: slideDown 0.4s ease-out;
+        }
+
+        .error-message {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+            border-left: 4px solid #c0392b;
+        }
+
+        .success-message {
+            background: linear-gradient(135deg, var(--primary-color), #45a049);
+            color: white;
+            border-left: 4px solid #27ae60;
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            z-index: 10000;
+            transform: translateX(400px);
+            transition: var(--transition);
+            max-width: 350px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.error {
+            border-left-color: #e74c3c;
+        }
+
+        .toast.success {
+            border-left-color: var(--primary-color);
+        }
+
+        /* Coordinate Display */
+        .coord-display {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        /* Search Box */
+        .search-box {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+            display: none;
+        }
+
+        .search-box input {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 14px;
+            width: 250px;
+            outline: none;
+        }
+
+        .search-box input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+        }
+
+        /* Legend */
+        .legend {
+            position: absolute;
+            bottom: 60px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            z-index: 1000;
+            max-width: 200px;
+            display: none;
+            backdrop-filter: blur(10px);
+        }
+
+        .legend h5 {
+            margin-bottom: 10px;
+            color: var(--dark-color);
+            font-size: 14px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 15px;
+            margin-right: 8px;
+            border-radius: 3px;
+        }
+
+        /* Animations */
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes slideInLeft {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Mobile and Tablet Responsiveness */
+        @media (max-width: 1024px) {
+            .container {
+                gap: 10px;
+                padding: 10px;
+            }
+            
+            .sidebar {
+                width: 320px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .mobile-toggle {
+                display: block;
+            }
+
+            .container {
+                flex-direction: column;
+                height: auto;
+                padding: 10px;
+            }
+            
+            .sidebar {
+                width: 100%;
+                max-height: 50vh;
+                position: fixed;
+                top: 85px;
+                left: -100%;
+                z-index: 1500;
+                transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                border-radius: 0 var(--border-radius) var(--border-radius) 0;
+            }
+            
+            .sidebar.open {
+                left: 0;
+            }
+            
+            .map-container {
+                height: calc(100vh - 120px);
+                margin-top: 10px;
+            }
+
+            .info-panel {
+                position: fixed;
+                top: auto;
+                bottom: 20px;
+                right: 20px;
+                left: 20px;
+                max-width: none;
+            }
+
+            .coord-display {
+                bottom: 10px;
+                left: 10px;
+                font-size: 11px;
+            }
+
+            .search-box {
+                position: relative;
+                top: 0;
+                left: 0;
+                margin-bottom: 15px;
+                width: 100%;
+            }
+
+            .search-box input {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 10px 15px;
+            }
+
+            .container {
+                padding: 8px;
+            }
+
+            .sidebar {
+                padding: 15px;
+                max-height: 60vh;
+            }
+
+            .layer-group {
+                padding: 10px;
+                margin-bottom: 15px;
+            }
+
+            .layer-item {
+                padding: 8px;
+            }
+
+            .map-container {
+                height: calc(100vh - 110px);
+            }
+
+            .mobile-toggle {
+                width: 45px;
+                height: 45px;
+                font-size: 18px;
+            }
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            .sidebar, .info-panel, .loading, .legend, .search-box {
+                background: rgba(44, 62, 80, 0.95);
+                color: #ecf0f1;
+            }
+
+            .layer-group {
+                background: rgba(52, 73, 94, 0.3);
+                border-color: rgba(149, 165, 166, 0.2);
+            }
+
+            .layer-item label, .sidebar h3, .layer-group h4 {
+                color: #ecf0f1;
+            }
+        }
+
+        /* Print styles */
+        @media print {
+            .sidebar, .mobile-toggle, .info-panel, .coord-display, .search-box {
+                display: none !important;
+            }
+            
+            .container {
+                flex-direction: column;
+            }
+            
+            .map-container {
+                width: 100% !important;
+                height: 80vh !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fas fa-globe-americas"></i> WebGIS Analisis Potensi Geothermal Halmahera Barat</h1>
+        <p><i class="fas fa-leaf"></i> Sistem Informasi Geografis untuk Pengembangan Energi Terbarukan</p>
+    </div>
+
+    <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle Sidebar">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="container">
+        <div class="sidebar" id="sidebar">
+            <h3><i class="fas fa-layer-group"></i> Layer Control</h3>
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+            
+            <div class="search-box">
+                <input type="text" placeholder="Cari layer..." id="layerSearch">
+            </div>
+            
+            <div class="layer-group">
+                <h4><i class="fas fa-mountain"></i> Data Topografi</h4>
+                <div class="layer-item">
+                    <input type="checkbox" id="elevation" data-file="elevation_jailolo.tif">
+                    <label for="elevation">Elevasi Digital Terrain Model</label>
+                    <i class="fas fa-info-circle layer-info" title="Model elevasi digital untuk analisis topografi"></i>
+                </div>
+                <div class="opacity-control" id="elevation-opacity">
+                    <label>Transparansi: <span id="elevation-value">70</span>%</label>
+                    <input type="range" min="0" max="100" value="70" data-layer="elevation">
+                </div>
+                
+                <div class="layer-item">
+                    <input type="checkbox" id="slope" data-file="slope_jailolo.tif">
+                    <label for="slope">Kemiringan Lereng (Slope)</label>
+                    <i class="fas fa-info-circle layer-info" title="Analisis kemiringan lereng untuk identifikasi area potensial"></i>
+                </div>
+                <div class="opacity-control" id="slope-opacity">
+                    <label>Transparansi: <span id="slope-value">70</span>%</label>
+                    <input type="range" min="0" max="100" value="70" data-layer="slope">
+                </div>
+            </div>
+
+            <div class="layer-group">
+                <h4><i class="fas fa-seedling"></i> Indeks Vegetasi</h4>
+                <div class="layer-item">
+                    <input type="checkbox" id="ndvi" data-file="ndvi_jailolo.tif">
+                    <label for="ndvi">NDVI (Normalized Difference Vegetation Index)</label>
+                    <i class="fas fa-info-circle layer-info" title="Indeks vegetasi untuk monitoring tutupan hijau"></i>
+                </div>
+                <div class="opacity-control" id="ndvi-opacity">
+                    <label>Transparansi: <span id="ndvi-value">70</span>%</label>
+                    <input type="range" min="0" max="100" value="70" data-layer="ndvi">
+                </div>
+                
+                <div class="layer-item">
+                    <input type="checkbox" id="evi" data-file="evi_jailolo.tif">
+                    <label for="evi">EVI (Enhanced Vegetation Index)</label>
+                    <i class="fas fa-info-circle layer-info" title="Indeks vegetasi yang lebih sensitif terhadap variasi biomassa"></i>
+                </div>
+                <div class="opacity-control" id="evi-opacity">
+                    <label>Transparansi: <span id="evi-value">70</span>%</label>
+                    <input type="range" min="0" max="100" value="70" data-layer="evi">
+                </div>
+                
+                <div class="layer-item">
+                    <input type="checkbox" id="evi_clipped" data-file="EVI_Clipped_2023.tif">
+                    <label for="evi_clipped">EVI Clipped 2023</label>
+                    <i class="fas fa-info-circle layer-info" title="Data EVI terpotong untuk area studi tahun 2023"></i>
+                </div>
+                <div class="opacity-control" id="evi_clipped-opacity">
+                    <label>Transparansi: <span id="evi_clipped-value">70</span>%</label>
+                    <input type="range" min="0" max="100" value="70" data-layer="evi_clipped">
+                </div>
+                
+                <div class="layer-item">
+                    <input type="checkbox" id="savi" data-file="savi_jailolo.tif">
+                    <label for="savi">SAVI (Soil Adjusted Vegetation Index)</label>
+                    <i class="fas fa-info-circle layer-info" title="Indeks vegetasi yang mempertimbangkan pengaruh tanah"></i>
+                </div>
+                <div class="opacity-control" id="savi-opacity">
+                    <label>Transparansi: <span id="savi-value">70</span>%</label>
+                    <input type="range" min="0" max="100" value="70" data-layer="savi">
+                </div>
+                
+                <div class="layer-item">
+                    <input type="checkbox" id="savi_clipped" data-file="SAVI_Clipped_2023.tif">
+                    <label for="savi_clipped">SAVI Clipped 2023</label>
+                    <i class="fas fa-info-circle layer-info" title="Data SAVI terpotong untuk area studi tahun 2023"></i>
+                </div>
+                <div class="opacity-control" id="savi_clipped-opacity">
+                    <label>Transparansi: <span id="savi_clipped-value">70</span>%</label>
+                    <input type="range" min="0" max="100" value="70" data-layer="savi_clipped">
+                </div>
+            </div>
+
+            <div class="layer-group">
+                <h4><i class="fas fa-tint"></i> Kelembaban Tanah</h4>
+                <div class="layer-item">
+                    <input type="checkbox" id="soil_moisture" data-file="soil_moisture_ndmi_jailolo.tif">
+                    <label for="soil_moisture">NDMI Kelembaban Tanah</label>
+                    <i class="fas fa-info-circle layer-info" title="Indeks kelembaban tanah menggunakan NDMI"></i>
+                </div>
+                <div class="opacity-control" id="soil_moisture-opacity">
+                    <label>Transparansi: <span id="soil_moisture-value">70</span>%</label>
+                    <input type="range" min="0" max="100" value="70" data-layer="soil_moisture">
+                </div>
+            </div>
+
+            <div class="layer-group">
+                <h4><i class="fas fa-fire"></i> Zona Geothermal</h4>
+                <div class="layer-item">
+                    <input type="checkbox" id="geothermal_index" data-file="geothermal_index_jailolo.tif">
+                    <label for="geothermal_index">Indeks Geothermal</label>
+                    <i class="fas fa-info-circle layer-info" title="Indeks potensi geothermal berdasarkan analisis multispektral"></i>
+                </div>
+                <div class="opacity-control" id="geothermal_index-opacity">
+                    <label>Transparansi: <span id="geothermal_index-value">80</span>%</label>
+                    <input type="range" min="0" max="100" value="80" data-layer="geothermal_index">
+                </div>
+                
+                <div class="layer-item">
+                    <input type="checkbox" id="zona_geothermal" data-file="zona_geothermal_halmahera.tif">
+                    <label for="zona_geothermal">Zona Geothermal Halmahera</label>
+                    <i class="fas fa-info-circle layer-info" title="Zonasi area geothermal di Halmahera Barat"></i>
+                </div>
+                <div class="opacity-control" id="zona_geothermal-opacity">
+                    <label>Transparansi: <span id="zona_geothermal-value">80</span>%</label>
+                    <input type="range" min="0" max="100" value="80" data-layer="zona_geothermal">
+                </div>
+                
+                <div class="layer-item">
+                    <input type="checkbox" id="zona_alterasi" data-file="zona_alterasi_hidrotermal_jailolo.tif">
+                    <label for="zona_alterasi">Zona Alterasi Hidrotermal</label>
+                    <i class="fas fa-info-circle layer-info" title="Area alterasi hidrotermal yang menunjukkan aktivitas geothermal"></i>
+                </div>
+                <div class="opacity-control" id="zona_alterasi-opacity">
+                    <label>Transparansi: <span id="zona_alterasi-value">80</span>%</label>
+                    <input type="range" min="0" max="100" value="80" data-layer="zona_alterasi">
+                </div>
+                
+                <div class="layer-item">
+                    <input type="checkbox" id="zona_manifestasi" data-file="zona_manifestasi_permukaan_jailolo.tif">
+                    <label for="zona_manifestasi">Zona Manifestasi Permukaan</label>
+                    <i class="fas fa-info-circle layer-info" title="Area manifestasi geothermal di permukaan"></i>
+                </div>
+                <div class="opacity-control" id="zona_manifestasi-opacity">
+                    <label>Transparansi: <span id="zona_manifestasi-value">80</span>%</label>
+                    <input type="range" min="0" max="100" value="80" data-layer="zona_manifestasi">
+                </div>
+                
+                <div class="layer-item">
+                    <input type="checkbox" id="zona_struktur" data-file="zona_struktur_geologi_jailolo.tif">
+                    <label for="zona_struktur">Zona Struktur Geologi</label>
+                    <i class="fas fa-info-circle layer-info" title="Struktur geologi yang berpengaruh pada sistem geothermal"></i>
+                </div>
+                <div class="opacity-control" id="zona_struktur-opacity">
+                    <label>Transparansi: <span id="zona_struktur-value">80</span>%</label>
+                    <input type="range" min="0" max="100" value="80" data-layer="zona_struktur">
+                </div>
+                
+                <div class="layer-item">
+                    <input type="checkbox" id="zona_buffer" data-file="Zona_Buffer1.tif">
+                    <label for="zona_buffer">Zona Buffer 1</label>
+                    <i class="fas fa-info-circle layer-info" title="Area buffer untuk analisis dampak pengembangan geothermal"></i>
+                </div>
+                <div class="opacity-control" id="zona_buffer-opacity">
+                    <label>Transparansi: <span id="zona_buffer-value">60</span>%</label>
+                    <input type="range" min="0" max="100" value="60" data-layer="zona_buffer">
+                </div>
+            </div>
+        </div>
+
+        <div class="map-container">
+            <div id="map"></div>
+            <div class="coord-display" id="coordDisplay">
+                <i class="fas fa-crosshairs"></i> Lat: -, Lng: -
+            </div>
+            <div class="legend" id="legend">
+                <h5><i class="fas fa-palette"></i> Legend</h5>
+                <div id="legendContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Memuat layer...</div>
+    </div>
+
+    <div class="info-panel" id="infoPanel">
+        <button class="close-btn" onclick="closeInfoPanel()">
+            <i class="fas fa-times"></i>
+        </button>
+        <h4><i class="fas fa-info-circle"></i> Informasi</h4>
+        <div id="infoContent"></div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <div id="toastContent"></div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <!-- GeoTIFF JS -->
+    <script src="https://cdn.jsdelivr.net/npm/geotiff@2.0.7/dist-browser/geotiff.min.js"></script>
+
+    <script>
+        class EnhancedGeothermalWebGIS {
+            constructor() {
+                this.map = null;
+                this.layers = new Map();
+                this.loadedTiffs = new Map();
+                this.currentCoords = { lat: 0, lng: 0 };
+                this.isMobile = window.innerWidth <= 768;
+                this.init();
+            }
+
+            init() {
+                this.initMap();
+                this.setupEventListeners();
+                this.setupMobileFeatures();
+                this.setupSearchFeature();
+                this.showWelcomeMessage();
+                this.handleResize();
+            }
+
+            initMap() {
+                // Koordinat area Jailolo, Halmahera Barat dengan zoom yang lebih responsif
+                this.map = L.map('map', {
+                    zoomControl: false
+                }).setView([1.0, 127.4], this.isMobile ? 9 : 10);
+
+                // Custom zoom control with better positioning
+                L.control.zoom({
+                    position: 'topright'
+                }).addTo(this.map);
+
+                // Enhanced base layers dengan preview thumbnails
+                const baseLayers = {
+                    '🌍 OpenStreetMap': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors',
+                        maxZoom: 19
+                    }),
+                    '🛰️ Satellite': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                        attribution: 'Esri, DigitalGlobe, GeoEye, Earthstar Geographics',
+                        maxZoom: 18
+                    }),
+                    '🏔️ Terrain': L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+                        attribution: 'Map data: © OpenStreetMap contributors, SRTM | Style: © OpenTopoMap',
+                        maxZoom: 16
+                    }),
+                    '🗺️ Topographic': L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap France',
+                        maxZoom: 18
+                    })
+                };
+
+                baseLayers['🛰️ Satellite'].addTo(this.map);
+
+                // Enhanced layer control with custom styling
+                const layerControl = L.control.layers(baseLayers, null, {
+                    position: 'topright',
+                    collapsed: this.isMobile
+                }).addTo(this.map);
+
+                // Scale control with metric and imperial units
+                L.control.scale({
+                    position: 'bottomleft',
+                    metric: true,
+                    imperial: false
+                }).addTo(this.map);
+
+                // Custom attribution
+                this.map.attributionControl.setPrefix(
+                    '<i class="fas fa-code"></i> WebGIS Geothermal Analysis'
+                );
+
+                // Mouse coordinate tracking
+                this.map.on('mousemove', (e) => {
+                    this.updateCoordinateDisplay(e.latlng);
+                });
+
+                // Click event for detailed info
+                this.map.on('click', (e) => {
+                    this.showLocationInfo(e.latlng);
+                });
+
+                // Map loading events
+                this.map.on('loadstart', () => {
+                    this.showLoading(true);
+                });
+
+                this.map.on('load', () => {
+                    this.showLoading(false);
+                });
+            }
+
+            setupEventListeners() {
+                // Enhanced checkbox event listeners with animation
+                document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.addEventListener('change', (e) => {
+                        const layerId = e.target.id;
+                        const filename = e.target.dataset.file;
+                        const layerItem = e.target.closest('.layer-item');
+                        
+                        if (e.target.checked) {
+                            layerItem.classList.add('active');
+                            this.loadTiffLayer(layerId, filename);
+                            this.showOpacityControl(layerId, true);
+                        } else {
+                            layerItem.classList.remove('active');
+                            this.removeLayer(layerId);
+                            this.showOpacityControl(layerId, false);
+                        }
+                    });
+                });
+
+                // Enhanced opacity controls with real-time feedback
+                document.querySelectorAll('input[type="range"]').forEach(slider => {
+                    slider.addEventListener('input', (e) => {
+                        const layerId = e.target.dataset.layer;
+                        const opacity = e.target.value / 100;
+                        const valueSpan = document.getElementById(`${layerId}-value`);
+                        
+                        if (valueSpan) {
+                            valueSpan.textContent = e.target.value;
+                        }
+                        
+                        if (this.layers.has(layerId)) {
+                            this.layers.get(layerId).setOpacity(opacity);
+                        }
+                    });
+
+                    // Visual feedback during drag
+                    slider.addEventListener('mousedown', () => {
+                        slider.style.cursor = 'grabbing';
+                    });
+
+                    slider.addEventListener('mouseup', () => {
+                        slider.style.cursor = 'grab';
+                    });
+                });
+
+                // Layer info tooltips
+                document.querySelectorAll('.layer-info').forEach(info => {
+                    info.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.showLayerDetails(e.target.closest('.layer-item'));
+                    });
+                });
+            }
+
+            setupMobileFeatures() {
+                const mobileToggle = document.getElementById('mobileToggle');
+                const sidebar = document.getElementById('sidebar');
+                
+                // Mobile sidebar toggle
+                mobileToggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('open');
+                    const isOpen = sidebar.classList.contains('open');
+                    mobileToggle.innerHTML = isOpen ? 
+                        '<i class="fas fa-times"></i>' : 
+                        '<i class="fas fa-bars"></i>';
+                });
+
+                // Close sidebar when clicking outside on mobile
+                document.addEventListener('click', (e) => {
+                    if (this.isMobile && 
+                        !sidebar.contains(e.target) && 
+                        !mobileToggle.contains(e.target) &&
+                        sidebar.classList.contains('open')) {
+                        sidebar.classList.remove('open');
+                        mobileToggle.innerHTML = '<i class="fas fa-bars"></i>';
+                    }
+                });
+
+                // Touch gestures for map navigation
+                if ('ontouchstart' in window) {
+                    this.map.touchZoom.enable();
+                    this.map.doubleClickZoom.enable();
+                }
+            }
+
+            setupSearchFeature() {
+                const searchInput = document.getElementById('layerSearch');
+                const layerItems = document.querySelectorAll('.layer-item');
+
+                searchInput.addEventListener('input', (e) => {
+                    const searchTerm = e.target.value.toLowerCase();
+                    
+                    layerItems.forEach(item => {
+                        const label = item.querySelector('label').textContent.toLowerCase();
+                        const group = item.closest('.layer-group');
+                        
+                        if (label.includes(searchTerm)) {
+                            item.style.display = 'flex';
+                            group.style.display = 'block';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+
+                    // Hide empty groups
+                    document.querySelectorAll('.layer-group').forEach(group => {
+                        const visibleItems = group.querySelectorAll('.layer-item[style*="flex"]');
+                        if (visibleItems.length === 0 && searchTerm !== '') {
+                            group.style.display = 'none';
+                        } else {
+                            group.style.display = 'block';
+                        }
+                    });
+                });
+
+                // Clear search on escape
+                searchInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        searchInput.value = '';
+                        layerItems.forEach(item => item.style.display = 'flex');
+                        document.querySelectorAll('.layer-group').forEach(group => {
+                            group.style.display = 'block';
+                        });
+                    }
+                });
+            }
+
+            async loadTiffLayer(layerId, filename) {
+                try {
+                    this.showLoading(true, `Memuat ${this.getLayerName(layerId)}...`);
+                    this.hideError();
+
+                    const filePath = `tiff/${filename}`;
+                    
+                    // Progressive loading with timeout
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+                    const response = await fetch(filePath, {
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+
+                    if (!response.ok) {
+                        throw new Error(`File tidak ditemukan: ${filename}\nPastikan file berada di folder 'tiff' dan dapat diakses.`);
+                    }
+
+                    const arrayBuffer = await response.arrayBuffer();
+                    const tiff = await GeoTIFF.fromArrayBuffer(arrayBuffer);
+                    const image = await tiff.getImage();
+                    
+                    // Check image properties
+                    const width = image.getWidth();
+                    const height = image.getHeight();
+                    const samplesPerPixel = image.getSamplesPerPixel();
+
+                    if (width * height > 50000000) { // Large image warning
+                        this.showToast('Peringatan: File berukuran besar, loading mungkin lambat', 'warning');
+                    }
+
+                    const rasters = await image.readRasters();
+                    const bbox = image.getBoundingBox();
+
+                    // Enhanced data processing
+                    const data = rasters[0];
+                    const statistics = this.calculateStatistics(data);
+                    const colorScale = this.createColorScale(layerId, data, statistics);
+
+                    // Create enhanced canvas with anti-aliasing
+                    const canvas = this.createEnhancedCanvas(width, height, data, colorScale, statistics);
+
+                    // Create image overlay with better bounds handling
+                    const bounds = [
+                        [Math.min(bbox[1], bbox[3]), Math.min(bbox[0], bbox[2])],
+                        [Math.max(bbox[1], bbox[3]), Math.max(bbox[0], bbox[2])]
+                    ];
+
+                    const imageOverlay = L.imageOverlay(canvas.toDataURL(), bounds, {
+                        opacity: this.getInitialOpacity(layerId),
+                        interactive: true,
+                        crossOrigin: true
+                    });
+
+                    // Add click event for pixel value query
+                    imageOverlay.on('click', (e) => {
+                        this.queryPixelValue(e.latlng, layerId, image, data);
+                    });
+
+                    // Add to map with fade-in animation
+                    imageOverlay.addTo(this.map);
+                    this.layers.set(layerId, imageOverlay);
+                    this.loadedTiffs.set(layerId, { 
+                        tiff, 
+                        image, 
+                        data, 
+                        statistics,
+                        bounds,
+                        filename 
+                    });
+
+                    // Auto-fit bounds for first layer or if requested
+                    if (this.layers.size === 1 || layerId.includes('geothermal')) {
+                        this.map.fitBounds(bounds, { padding: [20, 20] });
+                    }
+
+                    // Update legend
+                    this.updateLegend(layerId, colorScale, statistics);
+
+                    this.showToast(`Layer ${this.getLayerName(layerId)} berhasil dimuat`, 'success');
+
+                } catch (error) {
+                    console.error('Error loading TIFF:', error);
+                    
+                    let errorMessage = error.message;
+                    if (error.name === 'AbortError') {
+                        errorMessage = 'Loading timeout - file terlalu besar atau koneksi lambat';
+                    }
+                    
+                    this.showError(errorMessage);
+                    this.showToast(`Gagal memuat layer: ${this.getLayerName(layerId)}`, 'error');
+                    
+                    // Uncheck and reset
+                    const checkbox = document.getElementById(layerId);
+                    if (checkbox) {
+                        checkbox.checked = false;
+                        checkbox.closest('.layer-item').classList.remove('active');
+                    }
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            calculateStatistics(data) {
+                let min = Infinity, max = -Infinity, sum = 0, count = 0;
+                const values = [];
+
+                for (let i = 0; i < data.length; i++) {
+                    if (data[i] !== null && !isNaN(data[i]) && isFinite(data[i])) {
+                        const value = data[i];
+                        min = Math.min(min, value);
+                        max = Math.max(max, value);
+                        sum += value;
+                        count++;
+                        values.push(value);
+                    }
+                }
+
+                const mean = count > 0 ? sum / count : 0;
+                
+                // Calculate standard deviation
+                let variance = 0;
+                for (const value of values) {
+                    variance += Math.pow(value - mean, 2);
+                }
+                const stdDev = Math.sqrt(variance / count);
+
+                // Calculate percentiles
+                values.sort((a, b) => a - b);
+                const p25 = values[Math.floor(count * 0.25)] || 0;
+                const p75 = values[Math.floor(count * 0.75)] || 0;
+                const median = values[Math.floor(count * 0.5)] || 0;
+
+                return {
+                    min: isFinite(min) ? min : 0,
+                    max: isFinite(max) ? max : 1,
+                    mean,
+                    stdDev,
+                    median,
+                    p25,
+                    p75,
+                    count,
+                    validPixels: count
+                };
+            }
+
+            createEnhancedCanvas(width, height, data, colorScale, statistics) {
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                
+                // Enable image smoothing for better quality
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                
+                const imageData = ctx.createImageData(width, height);
+                const { min, max } = statistics;
+                const range = max - min;
+
+                // Enhanced color mapping with better distribution
+                for (let i = 0; i < data.length; i++) {
+                    const value = data[i];
+                    let r = 0, g = 0, b = 0, a = 0;
+
+                    if (value !== null && !isNaN(value) && isFinite(value)) {
+                        // Apply histogram equalization for better contrast
+                        const normalized = range > 0 ? (value - min) / range : 0;
+                        const color = this.interpolateColor(colorScale, normalized);
+                        
+                        r = color.r;
+                        g = color.g;
+                        b = color.b;
+                        a = 255;
+                    }
+
+                    const pixelIndex = i * 4;
+                    imageData.data[pixelIndex] = r;
+                    imageData.data[pixelIndex + 1] = g;
+                    imageData.data[pixelIndex + 2] = b;
+                    imageData.data[pixelIndex + 3] = a;
+                }
+
+                ctx.putImageData(imageData, 0, 0);
+                return canvas;
+            }
+
+            createColorScale(layerId, data, statistics) {
+                // Enhanced color schemes with better gradients
+                const colorSchemes = {
+                    elevation: {
+                        colors: ['#2E8B57', '#228B22', '#32CD32', '#ADFF2F', '#FFFF00', '#FFA500', '#FF6347', '#DC143C'],
+                        name: 'Elevasi (m)'
+                    },
+                    slope: {
+                        colors: ['#F8F8FF', '#E6E6FA', '#DDA0DD', '#DA70D6', '#BA55D3', '#9932CC', '#8B008B', '#4B0082'],
+                        name: 'Kemiringan (°)'
+                    },
+                    ndvi: {
+                        colors: ['#8B4513', '#CD853F', '#DEB887', '#F0E68C', '#ADFF2F', '#32CD32', '#228B22', '#006400'],
+                        name: 'NDVI'
+                    },
+                    evi: {
+                        colors: ['#8B4513', '#CD853F', '#DEB887', '#F0E68C', '#ADFF2F', '#32CD32', '#228B22', '#006400'],
+                        name: 'EVI'
+                    },
+                    evi_clipped: {
+                        colors: ['#8B4513', '#CD853F', '#DEB887', '#F0E68C', '#ADFF2F', '#32CD32', '#228B22', '#006400'],
+                        name: 'EVI (2023)'
+                    },
+                    savi: {
+                        colors: ['#8B4513', '#CD853F', '#DEB887', '#F0E68C', '#ADFF2F', '#32CD32', '#228B22', '#006400'],
+                        name: 'SAVI'
+                    },
+                    savi_clipped: {
+                        colors: ['#8B4513', '#CD853F', '#DEB887', '#F0E68C', '#ADFF2F', '#32CD32', '#228B22', '#006400'],
+                        name: 'SAVI (2023)'
+                    },
+                    soil_moisture: {
+                        colors: ['#8B4513', '#CD853F', '#F4A460', '#FFD700', '#00CED1', '#1E90FF', '#0000CD', '#00008B'],
+                        name: 'Kelembaban Tanah'
+                    },
+                    geothermal_index: {
+                        colors: ['#000080', '#0000CD', '#4169E1', '#00BFFF', '#00FFFF', '#FFFF00', '#FFA500', '#FF4500', '#FF0000'],
+                        name: 'Indeks Geothermal'
+                    },
+                    zona_geothermal: {
+                        colors: ['#000080', '#0000CD', '#4169E1', '#00BFFF', '#00FFFF', '#FFFF00', '#FFA500', '#FF4500', '#FF0000'],
+                        name: 'Zona Geothermal'
+                    },
+                    zona_alterasi: {
+                        colors: ['#800080', '#9932CC', '#BA55D3', '#DA70D6', '#DDA0DD', '#EE82EE', '#FFB6C1'],
+                        name: 'Zona Alterasi'
+                    },
+                    zona_manifestasi: {
+                        colors: ['#FF4500', '#FF6347', '#FF7F50', '#FFA07A', '#FFA500', '#FFD700'],
+                        name: 'Manifestasi Permukaan'
+                    },
+                    zona_struktur: {
+                        colors: ['#2F4F4F', '#696969', '#708090', '#B0C4DE', '#D3D3D3', '#E6E6FA'],
+                        name: 'Struktur Geologi'
+                    },
+                    zona_buffer: {
+                        colors: ['#32CD32', '#7CFC00', '#90EE90', '#98FB98', '#F0FFF0'],
+                        name: 'Zona Buffer'
+                    }
+                };
+
+                const scheme = colorSchemes[layerId] || {
+                    colors: ['#0000FF', '#00FFFF', '#00FF00', '#FFFF00', '#FF0000'],
+                    name: 'Data'
+                };
+
+                return {
+                    colors: scheme.colors,
+                    name: scheme.name,
+                    min: statistics.min,
+                    max: statistics.max,
+                    range: statistics.max - statistics.min
+                };
+            }
+
+            interpolateColor(colorScale, value) {
+                const colors = colorScale.colors;
+                if (value <= 0) return this.hexToRgb(colors[0]);
+                if (value >= 1) return this.hexToRgb(colors[colors.length - 1]);
+
+                const scaledValue = value * (colors.length - 1);
+                const index = Math.floor(scaledValue);
+                const fraction = scaledValue - index;
+
+                const color1 = this.hexToRgb(colors[index]);
+                const color2 = this.hexToRgb(colors[Math.min(index + 1, colors.length - 1)]);
+
+                return {
+                    r: Math.round(color1.r + (color2.r - color1.r) * fraction),
+                    g: Math.round(color1.g + (color2.g - color1.g) * fraction),
+                    b: Math.round(color1.b + (color2.b - color1.b) * fraction)
+                };
+            }
+
+            hexToRgb(hex) {
+                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? {
+                    r: parseInt(result[1], 16),
+                    g: parseInt(result[2], 16),
+                    b: parseInt(result[3], 16)
+                } : { r: 0, g: 0, b: 0 };
+            }
+
+            removeLayer(layerId) {
+                if (this.layers.has(layerId)) {
+                    this.map.removeLayer(this.layers.get(layerId));
+                    this.layers.delete(layerId);
+                    this.loadedTiffs.delete(layerId);
+                    this.showToast(`Layer ${this.getLayerName(layerId)} dihapus`, 'info');
+                }
+                
+                this.showOpacityControl(layerId, false);
+                this.updateLegend();
+            }
+
+            showOpacityControl(layerId, show) {
+                const opacityControl = document.getElementById(`${layerId}-opacity`);
+                if (opacityControl) {
+                    if (show) {
+                        opacityControl.classList.add('show');
+                    } else {
+                        opacityControl.classList.remove('show');
+                    }
+                }
+            }
+
+            updateCoordinateDisplay(latlng) {
+                const coordDisplay = document.getElementById('coordDisplay');
+                const lat = latlng.lat.toFixed(6);
+                const lng = latlng.lng.toFixed(6);
+                
+                coordDisplay.innerHTML = `
+                    <i class="fas fa-crosshairs"></i> 
+                    <strong>Lat:</strong> ${lat}, 
+                    <strong>Lng:</strong> ${lng}
+                `;
+                
+                this.currentCoords = { lat, lng };
+            }
+
+            showLocationInfo(latlng) {
+                const info = {
+                    coordinates: `${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}`,
+                    activeLayersCount: this.layers.size,
+                    layerValues: []
+                };
+
+                // Get pixel values from active layers
+                for (const [layerId, layerData] of this.loadedTiffs.entries()) {
+                    if (this.layers.has(layerId)) {
+                        try {
+                            const pixelValue = this.getPixelValue(latlng, layerData);
+                            if (pixelValue !== null) {
+                                info.layerValues.push({
+                                    name: this.getLayerName(layerId),
+                                    value: pixelValue.toFixed(4)
+                                });
+                            }
+                        } catch (e) {
+                            console.warn(`Could not get pixel value for ${layerId}:`, e);
+                        }
+                    }
+                }
+
+                this.showLocationDetails(info);
+            }
+
+            showLocationDetails(info) {
+                const infoPanel = document.getElementById('infoPanel');
+                const infoContent = document.getElementById('infoContent');
+                
+                let content = `
+                    <div style="margin-bottom: 15px;">
+                        <strong><i class="fas fa-map-marker-alt"></i> Koordinat:</strong><br>
+                        <code style="background: #f8f9fa; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                            ${info.coordinates}
+                        </code>
+                    </div>
+                `;
+
+                if (info.layerValues.length > 0) {
+                    content += `
+                        <div style="margin-bottom: 15px;">
+                            <strong><i class="fas fa-layer-group"></i> Nilai Layer (${info.layerValues.length}):</strong>
+                        </div>
+                    `;
+                    
+                    info.layerValues.forEach(layer => {
+                        content += `
+                            <div style="margin-bottom: 8px; padding: 8px; background: rgba(76, 175, 80, 0.1); border-radius: 6px;">
+                                <strong style="color: var(--primary-color);">${layer.name}:</strong><br>
+                                <span style="font-family: monospace; font-size: 13px;">${layer.value}</span>
+                            </div>
+                        `;
+                    });
+                } else {
+                    content += `
+                        <div style="color: #666; font-style: italic;">
+                            <i class="fas fa-info-circle"></i> 
+                            Tidak ada layer aktif di lokasi ini
+                        </div>
+                    `;
+                }
+
+                infoContent.innerHTML = content;
+                infoPanel.style.display = 'block';
+                
+                // Auto-hide after 15 seconds
+                setTimeout(() => {
+                    if (infoPanel.style.display === 'block') {
+                        infoPanel.style.display = 'none';
+                    }
+                }, 15000);
+            }
+
+            getPixelValue(latlng, layerData) {
+                try {
+                    const { image, data } = layerData;
+                    const bbox = image.getBoundingBox();
+                    const width = image.getWidth();
+                    const height = image.getHeight();
+                    
+                    // Convert lat/lng to pixel coordinates
+                    const x = Math.floor(((latlng.lng - bbox[0]) / (bbox[2] - bbox[0])) * width);
+                    const y = Math.floor(((bbox[3] - latlng.lat) / (bbox[3] - bbox[1])) * height);
+                    
+                    if (x >= 0 && x < width && y >= 0 && y < height) {
+                        const index = y * width + x;
+                        return data[index];
+                    }
+                    return null;
+                } catch (error) {
+                    console.error('Error getting pixel value:', error);
+                    return null;
+                }
+            }
+
+            updateLegend(layerId = null, colorScale = null, statistics = null) {
+                const legend = document.getElementById('legend');
+                const legendContent = document.getElementById('legendContent');
+                
+                if (this.layers.size === 0) {
+                    legend.style.display = 'none';
+                    return;
+                }
+
+                let content = '';
+                
+                if (layerId && colorScale && statistics) {
+                    const colors = colorScale.colors;
+                    const step = (statistics.max - statistics.min) / (colors.length - 1);
+                    
+                    content += `<div style="margin-bottom: 10px; font-weight: bold; color: var(--primary-color);">${colorScale.name}</div>`;
+                    
+                    for (let i = colors.length - 1; i >= 0; i--) {
+                        const value = statistics.min + (step * i);
+                        content += `
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: ${colors[i]};"></div>
+                                <span>${value.toFixed(2)}</span>
+                            </div>
+                        `;
+                    }
+                } else {
+                    // Show active layers
+                    content += `<div style="font-weight: bold; margin-bottom: 8px;">Layer Aktif (${this.layers.size})</div>`;
+                    for (const layerId of this.layers.keys()) {
+                        const layerData = this.loadedTiffs.get(layerId);
+                        if (layerData) {
+                            content += `
+                                <div class="legend-item">
+                                    <div class="legend-color" style="background: linear-gradient(90deg, ${this.createColorScale(layerId, null, {min: 0, max: 1}).colors.slice(0, 3).join(', ')});"></div>
+                                    <span style="font-size: 11px;">${this.getLayerName(layerId)}</span>
+                                </div>
+                            `;
+                        }
+                    }
+                }
+
+                legendContent.innerHTML = content;
+                legend.style.display = 'block';
+            }
+
+            queryPixelValue(latlng, layerId, image, data) {
+                const pixelValue = this.getPixelValue(latlng, { image, data });
+                
+                if (pixelValue !== null) {
+                    const popup = L.popup()
+                        .setLatLng(latlng)
+                        .setContent(`
+                            <div style="text-align: center; min-width: 150px;">
+                                <strong style="color: var(--primary-color);">${this.getLayerName(layerId)}</strong><br>
+                                <span style="font-size: 16px; font-weight: bold;">${pixelValue.toFixed(4)}</span><br>
+                                <small style="color: #666;">Lat: ${latlng.lat.toFixed(6)}<br>Lng: ${latlng.lng.toFixed(6)}</small>
+                            </div>
+                        `)
+                        .openOn(this.map);
+
+                    // Auto-close popup after 5 seconds
+                    setTimeout(() => {
+                        this.map.closePopup(popup);
+                    }, 5000);
+                }
+            }
+
+            showLayerDetails(layerItem) {
+                const label = layerItem.querySelector('label').textContent;
+                const checkbox = layerItem.querySelector('input[type="checkbox"]');
+                const layerId = checkbox.id;
+                const filename = checkbox.dataset.file;
+                
+                const infoPanel = document.getElementById('infoPanel');
+                const infoContent = document.getElementById('infoContent');
+                
+                let content = `
+                    <div style="margin-bottom: 15px;">
+                        <strong style="color: var(--primary-color);"><i class="fas fa-layer-group"></i> ${label}</strong>
+                    </div>
+                    
+                    <div style="margin-bottom: 12px;">
+                        <strong>File:</strong> <code style="font-size: 11px; background: #f8f9fa; padding: 2px 6px; border-radius: 3px;">${filename}</code>
+                    </div>
+                    
+                    <div style="margin-bottom: 12px;">
+                        <strong>Status:</strong> 
+                        <span style="color: ${checkbox.checked ? 'green' : 'orange'};">
+                            ${checkbox.checked ? '✅ Aktif' : '⏸️ Tidak aktif'}
+                        </span>
+                    </div>
+                `;
+
+                if (checkbox.checked && this.loadedTiffs.has(layerId)) {
+                    const layerData = this.loadedTiffs.get(layerId);
+                    const stats = layerData.statistics;
+                    
+                    content += `
+                        <div style="background: rgba(76, 175, 80, 0.1); padding: 10px; border-radius: 8px; margin-top: 12px;">
+                            <strong style="color: var(--primary-color);">📊 Statistik Data:</strong><br>
+                            <small>
+                                <strong>Min:</strong> ${stats.min.toFixed(4)}<br>
+                                <strong>Max:</strong> ${stats.max.toFixed(4)}<br>
+                                <strong>Mean:</strong> ${stats.mean.toFixed(4)}<br>
+                                <strong>Std Dev:</strong> ${stats.stdDev.toFixed(4)}<br>
+                                <strong>Pixel Valid:</strong> ${stats.validPixels.toLocaleString()}
+                            </small>
+                        </div>
+                    `;
+                }
+
+                // Add layer-specific descriptions
+                const descriptions = {
+                    elevation: "Model elevasi digital menunjukkan ketinggian permukaan tanah dalam meter di atas permukaan laut. Data ini penting untuk analisis topografi dan identifikasi area dengan aktivitas geothermal.",
+                    slope: "Kemiringan lereng menunjukkan gradien kemiringan dalam derajat. Area dengan kemiringan tertentu dapat mengindikasikan struktur geologi yang berkaitan dengan sistem geothermal.",
+                    ndvi: "NDVI mengukur kesehatan dan kepadatan vegetasi. Nilai rendah di area yang seharusnya bervegetasi dapat mengindikasikan aktivitas geothermal yang mempengaruhi pertumbuhan tanaman.",
+                    geothermal_index: "Indeks geothermal merupakan gabungan dari berbagai parameter untuk mengidentifikasi potensi area geothermal. Nilai tinggi menunjukkan potensi yang lebih besar.",
+                    zona_geothermal: "Zonasi area geothermal berdasarkan analisis multi-kriteria yang mempertimbangkan faktor geologi, geofisika, dan geokimia.",
+                    zona_alterasi: "Zona alterasi hidrotermal menunjukkan area yang telah mengalami perubahan mineral akibat aktivitas air panas bawah tanah."
+                };
+
+                if (descriptions[layerId]) {
+                    content += `
+                        <div style="background: rgba(33, 150, 243, 0.1); padding: 10px; border-radius: 8px; margin-top: 12px;">
+                            <strong style="color: var(--secondary-color);">ℹ️ Deskripsi:</strong><br>
+                            <small style="line-height: 1.4;">${descriptions[layerId]}</small>
+                        </div>
+                    `;
+                }
+
+                infoContent.innerHTML = content;
+                infoPanel.style.display = 'block';
+            }
+
+            getInitialOpacity(layerId) {
+                const opacitySlider = document.querySelector(`input[data-layer="${layerId}"]`);
+                return opacitySlider ? opacitySlider.value / 100 : 0.7;
+            }
+
+            getLayerName(layerId) {
+                const labelElement = document.querySelector(`label[for="${layerId}"]`);
+                return labelElement ? labelElement.textContent : layerId;
+            }
+
+            showLoading(show, message = 'Memuat data...') {
+                const loading = document.getElementById('loading');
+                const loadingText = loading.querySelector('.loading-text');
+                
+                if (show) {
+                    loadingText.textContent = message;
+                    loading.style.display = 'block';
+                } else {
+                    loading.style.display = 'none';
+                }
+            }
+
+            showError(message) {
+                const errorDiv = document.getElementById('errorMessage');
+                errorDiv.innerHTML = `
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    <strong>Error:</strong> ${message}
+                `;
+                errorDiv.style.display = 'block';
+                
+                // Auto-hide after 10 seconds
+                setTimeout(() => {
+                    errorDiv.style.display = 'none';
+                }, 10000);
+            }
+
+            hideError() {
+                const errorDiv = document.getElementById('errorMessage');
+                errorDiv.style.display = 'none';
+            }
+
+            showSuccess(message) {
+                const successDiv = document.getElementById('successMessage');
+                if (successDiv) {
+                    successDiv.innerHTML = `
+                        <i class="fas fa-check-circle"></i> 
+                        <strong>Berhasil:</strong> ${message}
+                    `;
+                    successDiv.style.display = 'block';
+                    
+                    setTimeout(() => {
+                        successDiv.style.display = 'none';
+                    }, 5000);
+                }
+            }
+
+            showToast(message, type = 'info') {
+                const toast = document.getElementById('toast');
+                const toastContent = document.getElementById('toastContent');
+                
+                const icons = {
+                    success: 'fas fa-check-circle',
+                    error: 'fas fa-exclamation-circle',
+                    warning: 'fas fa-exclamation-triangle',
+                    info: 'fas fa-info-circle'
+                };
+
+                toastContent.innerHTML = `
+                    <i class="${icons[type] || icons.info}"></i> 
+                    ${message}
+                `;
+
+                toast.className = `toast ${type} show`;
+                
+                // Auto-hide after 4 seconds
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 4000);
+            }
+
+            handleResize() {
+                window.addEventListener('resize', () => {
+                    const wasMobile = this.isMobile;
+                    this.isMobile = window.innerWidth <= 768;
+                    
+                    if (wasMobile !== this.isMobile) {
+                        // Trigger map resize
+                        setTimeout(() => {
+                            this.map.invalidateSize();
+                        }, 300);
+                        
+                        // Close mobile sidebar if switching to desktop
+                        if (!this.isMobile) {
+                            const sidebar = document.getElementById('sidebar');
+                            sidebar.classList.remove('open');
+                            document.getElementById('mobileToggle').innerHTML = '<i class="fas fa-bars"></i>';
+                        }
+                    }
+                });
+            }
+
+            showWelcomeMessage() {
+                const infoPanel = document.getElementById('infoPanel');
+                const infoContent = document.getElementById('infoContent');
+                
+                infoContent.innerHTML = `
+                    <div style="text-align: center; padding: 10px;">
+                        <h4 style="color: var(--primary-color); margin-bottom: 15px;">
+                            <i class="fas fa-rocket"></i> Selamat Datang!
+                        </h4>
+                        
+                        <div style="background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(33, 150, 243, 0.1)); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                            <p style="margin-bottom: 10px; font-weight: 500;">
+                                <strong>WebGIS Analisis Potensi Geothermal Halmahera Barat</strong>
+                            </p>
+                            <p style="font-size: 14px; color: #666; line-height: 1.4;">
+                                Sistem informasi geografis interaktif untuk analisis dan visualisasi potensi energi geothermal di Halmahera Barat
+                            </p>
+                        </div>
+
+                        <div style="text-align: left; font-size: 13px;">
+                            <div style="margin-bottom: 12px;">
+                                <strong style="color: var(--primary-color);"><i class="fas fa-play-circle"></i> Panduan Penggunaan:</strong>
+                            </div>
+                            
+                            <div style="margin-bottom: 8px; padding: 8px; background: rgba(255, 255, 255, 0.7); border-radius: 6px; border-left: 3px solid var(--primary-color);">
+                                <i class="fas fa-mouse-pointer" style="color: var(--secondary-color);"></i>
+                                <strong>Pilih Layer:</strong> Gunakan checkbox di sidebar kiri untuk mengaktifkan layer
+                            </div>
+                            
+                            <div style="margin-bottom: 8px; padding: 8px; background: rgba(255, 255, 255, 0.7); border-radius: 6px; border-left: 3px solid var(--secondary-color);">
+                                <i class="fas fa-sliders-h" style="color: var(--primary-color);"></i>
+                                <strong>Atur Transparansi:</strong> Gunakan slider untuk mengatur opacity layer
+                            </div>
+                            
+                            <div style="margin-bottom: 8px; padding: 8px; background: rgba(255, 255, 255, 0.7); border-radius: 6px; border-left: 3px solid var(--accent-color);">
+                                <i class="fas fa-map-marker-alt" style="color: var(--accent-color);"></i>
+                                <strong>Klik Peta:</strong> Klik pada peta untuk informasi koordinat dan nilai pixel
+                            </div>
+                            
+                            <div style="margin-bottom: 12px; padding: 8px; background: rgba(255, 255, 255, 0.7); border-radius: 6px; border-left: 3px solid #9C27B0;">
+                                <i class="fas fa-search" style="color: #9C27B0;"></i>
+                                <strong>Cari Layer:</strong> Gunakan kotak pencarian untuk menemukan layer dengan cepat
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 15px; padding: 10px; background: rgba(255, 193, 7, 0.1); border-radius: 8px; border: 1px dashed #FFC107;">
+                            <small style="color: #856404;">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Catatan:</strong> Pastikan file TIFF berada dalam folder 'tiff' dan dapat diakses untuk memuat layer dengan benar.
+                            </small>
+                        </div>
+
+                        <div style="margin-top: 15px;">
+                            <button onclick="closeInfoPanel()" style="background: var(--primary-color); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px;">
+                                <i class="fas fa-check"></i> Mulai Eksplorasi
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                infoPanel.style.display = 'block';
+            }
+        }
+
+        // Global function to close info panel
+        function closeInfoPanel() {
+            document.getElementById('infoPanel').style.display = 'none';
+        }
+
+        // Initialize the Enhanced WebGIS when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            // Show initial loading
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+            
+            setTimeout(() => {
+                loading.style.display = 'none';
+                new EnhancedGeothermalWebGIS();
+            }, 1000);
+        });
+
+        // Service Worker for offline capability (optional)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+
+        // Performance monitoring
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if (window.performance) {
+                    const perfData = window.performance.timing;
+                    const loadTime = perfData.loadEventEnd - perfData.navigationStart;
+                    console.log(`Page loaded in ${loadTime}ms`);
+                }
+            }, 0);
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // ESC to close panels
+            if (e.key === 'Escape') {
+                closeInfoPanel();
+                const toast = document.getElementById('toast');
+                toast.classList.remove('show');
+            }
+            
+            // F11 for fullscreen
+            if (e.key === 'F11') {
+                e.preventDefault();
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen();
+                } else {
+                    document.exitFullscreen();
+                }
+            }
+            
+            // Ctrl+H to toggle sidebar on desktop
+            if (e.ctrlKey && e.key === 'h' && window.innerWidth > 768) {
+                e.preventDefault();
+                const sidebar = document.getElementById('sidebar');
+                sidebar.style.display = sidebar.style.display === 'none' ? 'block' : 'none';
+            }
+        });
+
+        // Add custom map controls
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add fullscreen button
+            const fullscreenButton = document.createElement('button');
+            fullscreenButton.innerHTML = '<i class="fas fa-expand"></i>';
+            fullscreenButton.className = 'custom-control-button';
+            fullscreenButton.style.cssText = `
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                z-index: 1000;
+                background: white;
+                border: none;
+                border-radius: 6px;
+                padding: 8px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                cursor: pointer;
+                font-size: 14px;
+                color: #333;
+            `;
+            
+            fullscreenButton.addEventListener('click', () => {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen();
+                    fullscreenButton.innerHTML = '<i class="fas fa-compress"></i>';
+                } else {
+                    document.exitFullscreen();
+                    fullscreenButton.innerHTML = '<i class="fas fa-expand"></i>';
+                }
+            });
+            
+            document.querySelector('.map-container').appendChild(fullscreenButton);
+        });
+    </script>
+</body>
+</html>
