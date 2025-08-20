@@ -810,17 +810,7 @@
                     <label>Transparansi: <span id="geothermal_index-value">80</span>%</label>
                     <input type="range" min="0" max="100" value="80" data-layer="geothermal_index">
                 </div>
-                
-                <div class="layer-item">
-                    <input type="checkbox" id="zona_geothermal" data-file="zona_geothermal_halmahera.tif">
-                    <label for="zona_geothermal">Zona Geothermal Halmahera</label>
-                    <i class="fas fa-info-circle layer-info" title="Zonasi area geothermal di Halmahera Barat"></i>
-                </div>
-                <div class="opacity-control" id="zona_geothermal-opacity">
-                    <label>Transparansi: <span id="zona_geothermal-value">80</span>%</label>
-                    <input type="range" min="0" max="100" value="80" data-layer="zona_geothermal">
-                </div>
-                
+                                
                 <div class="layer-item">
                     <input type="checkbox" id="zona_alterasi" data-file="zona_alterasi_hidrotermal_jailolo.tif">
                     <label for="zona_alterasi">Zona Alterasi Hidrotermal</label>
@@ -853,12 +843,46 @@
                 
                 <div class="layer-item">
                     <input type="checkbox" id="zona_buffer" data-file="Zona_Buffer1.tif">
-                    <label for="zona_buffer">Zona Buffer 1</label>
+                    <label for="zona_buffer">Zona Buffer</label>
                     <i class="fas fa-info-circle layer-info" title="Area buffer untuk analisis dampak pengembangan geothermal"></i>
                 </div>
                 <div class="opacity-control" id="zona_buffer-opacity">
                     <label>Transparansi: <span id="zona_buffer-value">60</span>%</label>
                     <input type="range" min="0" max="100" value="60" data-layer="zona_buffer">
+                </div>
+            </div>
+
+
+            <div class="layer-group">
+                <h4><i class="fas fa-fire"></i>Peta Potensi Zona Geothermal</h4>
+                <div class="layer-item">
+                    <input type="checkbox" id="geothermal_index" data-file="zona_potensi_rendah_jailolo.tif">
+                    <label for="geothermal_index">Zona Potensi Rendah</label>
+                    <i class="fas fa-info-circle layer-info" title="Indeks potensi geothermal berdasarkan analisis multispektral"></i>
+                </div>
+                <div class="opacity-control" id="geothermal_index-opacity">
+                    <label>Transparansi: <span id="geothermal_index-value">80</span>%</label>
+                    <input type="range" min="0" max="100" value="80" data-layer="geothermal_index">
+                </div>
+                                
+                <div class="layer-item">
+                    <input type="checkbox" id="geothermal_index" data-file="zona_potensi_sedang_jailolo.tif">
+                    <label for="geothermal_index">Zona Potensi Sedang</label>
+                    <i class="fas fa-info-circle layer-info" title="Indeks potensi geothermal berdasarkan analisis multispektral"></i>
+                </div>
+                <div class="opacity-control" id="geothermal_index-opacity">
+                    <label>Transparansi: <span id="geothermal_index-value">80</span>%</label>
+                    <input type="range" min="0" max="100" value="80" data-layer="geothermal_index">
+                </div>
+                
+                <div class="layer-item">
+                    <input type="checkbox" id="geothermal_index" data-file="zona_potensi_tinggi_jailolo.tif">
+                    <label for="geothermal_index">Zona Potensi Tinggi</label>
+                    <i class="fas fa-info-circle layer-info" title="Indeks potensi geothermal berdasarkan analisis multispektral"></i>
+                </div>
+                <div class="opacity-control" id="geothermal_index-opacity">
+                    <label>Transparansi: <span id="geothermal_index-value">80</span>%</label>
+                    <input type="range" min="0" max="100" value="80" data-layer="geothermal_index">
                 </div>
             </div>
         </div>

@@ -1,0 +1,13 @@
+<PAMDataset>
+  <PAMRasterBand band="1">
+    <Description>Geothermal_Index</Description>
+    <Metadata>
+      <MDI key="STATISTICS_APPROXIMATE">YES</MDI>
+      <MDI key="STATISTICS_MINIMUM">0.11750295101056</MDI>
+      <MDI key="STATISTICS_MAXIMUM">0.65690164644578</MDI>
+      <MDI key="STATISTICS_MEAN">0.41355981476821</MDI>
+      <MDI key="STATISTICS_STDDEV">0.09144106632661</MDI>
+      <MDI key="STATISTICS_VALID_PERCENT">68.46</MDI>
+    </Metadata>
+  </PAMRasterBand>
+</PAMDataset>

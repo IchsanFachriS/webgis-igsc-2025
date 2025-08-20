@@ -1,0 +1,13 @@
+<PAMDataset>
+  <PAMRasterBand band="1">
+    <Description>SAVI</Description>
+    <Metadata>
+      <MDI key="STATISTICS_APPROXIMATE">YES</MDI>
+      <MDI key="STATISTICS_MINIMUM">-0.07362293023705</MDI>
+      <MDI key="STATISTICS_MAXIMUM">0.73218598399731</MDI>
+      <MDI key="STATISTICS_MEAN">0.52955064243475</MDI>
+      <MDI key="STATISTICS_STDDEV">0.062824574009204</MDI>
+      <MDI key="STATISTICS_VALID_PERCENT">68.46</MDI>
+    </Metadata>
+  </PAMRasterBand>
+</PAMDataset>
